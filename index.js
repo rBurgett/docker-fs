@@ -1,10 +1,14 @@
 const fs = require('fs-extra');
 const path = require('path');
+const rmrf = require('rmrf-promise');
 
 const methods = {
   ensureDir: 'ensureDir',
   pathExists: 'pathExists',
   writeFile: 'writeFile',
+  readFile: 'readFile',
+  readdir: 'readdir',
+  remove: 'remove',
 };
 
 (async function() {
@@ -28,14 +32,33 @@ const methods = {
     case methods.ensureDir: {
       const [ target ] = params;
       await fs.ensureDir(path.join(baseDir, target));
+      process.stdout.write(JSON.stringify(true));
       break;
     } case methods.pathExists: {
       const [ target ] = params;
-      await fs.pathExists(path.join(baseDir, target));
+      const exists = await fs.pathExists(path.join(baseDir, target));
+      process.stdout.write(JSON.stringify(exists));
       break;
     } case methods.writeFile: {
       const [ target, content, encoding ] = params;
-      await fs.writeFile(path.join(baseDir, target), content, encoding);
+      await fs.write(path.join(baseDir, target), content, encoding);
+      process.stdout.write(JSON.stringify(true));
+      break;
+    } case methods.readFile: {
+      const [ target, encoding ] = params;
+      const content = await fs.readFile(path.join(baseDir, target, encoding));
+      const json = content ? JSON.stringify(content) : '""';
+      process.stdout.write(json);
+      break;
+    } case methods.readdir: {
+      const [ target ] = params;
+      const files = await fs.readdir(path.join(baseDir, target));
+      process.stdout.write(JSON.stringify(files));
+      break;
+    } case methods.remove: {
+      const [ target ] = params;
+      await rmrf(path.join(baseDir, target));
+      process.stdout.write(JSON.stringify(true));
       break;
     } default:
       throw new Error(`Unknown method ${method}`);
