@@ -40,13 +40,21 @@ const methods = {
       process.stdout.write(JSON.stringify(exists));
       break;
     } case methods.writeFile: {
-      const [ target, content, encoding ] = params;
-      await fs.write(path.join(baseDir, target), content, encoding);
+      const [ target, encoding ] = params;
+      const content = await new Promise((resolve) => {
+        const listener = function(data) {
+          process.stdin.removeListener('data', listener);
+          resolve(data.toString());
+        };
+        process.stdin.on('data', listener);
+        process.stdout.write('\n');
+      });
+      await fs.writeFile(path.join(baseDir, target), content, encoding);
       process.stdout.write(JSON.stringify(true));
       break;
     } case methods.readFile: {
       const [ target, encoding ] = params;
-      const content = await fs.readFile(path.join(baseDir, target, encoding));
+      const content = await fs.readFile(path.join(baseDir, target), encoding);
       const json = content ? JSON.stringify(content) : '""';
       process.stdout.write(json);
       break;
@@ -63,5 +71,5 @@ const methods = {
     } default:
       throw new Error(`Unknown method ${method}`);
   }
-
+  process.exit(0);
 })();
