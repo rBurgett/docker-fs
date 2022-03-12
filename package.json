@@ -18,6 +18,8 @@
   "homepage": "https://github.com/rBurgett/docker-fs#readme",
   "dependencies": {
     "fs-extra": "^10.0.1",
-    "rmrf-promise": "^1.1.0"
+    "lodash": "^4.17.21",
+    "rmrf-promise": "^1.1.0",
+    "uuid": "^8.3.2"
   }
 }

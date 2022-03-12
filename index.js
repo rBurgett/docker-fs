@@ -1,6 +1,8 @@
 const fs = require('fs-extra');
 const path = require('path');
 const rmrf = require('rmrf-promise');
+const uuid = require('uuid');
+const { escapeRegExp } = require('lodash')
 
 const methods = {
   ensureDir: 'ensureDir',
@@ -41,13 +43,24 @@ const methods = {
       break;
     } case methods.writeFile: {
       const [ target, encoding ] = params;
+      const separator = '**' + uuid.v4() + '**';
+      const matchPatt = new RegExp(escapeRegExp(separator), 'g');
       const content = await new Promise((resolve) => {
+        const contentArr = [];
         const listener = function(data) {
-          process.stdin.removeListener('data', listener);
-          resolve(data.toString());
+          const str = data.toString();
+          contentArr.push(str);
+          const joined = contentArr.join('');
+          const matches = joined.match(matchPatt);
+          if(matches && matches.length > 1) {
+            const { index: idx0 } = matchPatt.exec(joined);
+            const { index: idx1 } = matchPatt.exec(joined);
+            const trimmed = joined.slice(idx0 + separator.length, idx1);
+            resolve(trimmed);
+          }
         };
         process.stdin.on('data', listener);
-        process.stdout.write('\n');
+        process.stdout.write(separator);
       });
       await fs.writeFile(path.join(baseDir, target), content, encoding);
       process.stdout.write(JSON.stringify(true));
